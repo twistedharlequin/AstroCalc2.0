@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroCalc v2.0</title>
+    <style>
+        /* CSS untuk Styling dan Animasi */
+        :root {
+            /* Tema Abu-Abu Kelabu Gelap (Dark Slate Grey) */
+            --bg-color: #222831; /* Latar Belakang Utama */
+            --calc-bg: #393e46; /* Latar Belakang Kalkulator */
+            --primary-op: #00adb5; /* Biru/Cyan Modern untuk operator utama */
+            --secondary-op: #ff7f50; /* Orange Coral untuk tombol Clear/Fungsi */
+            --text-color: #eeeeee; /* Warna Teks Putih Pudar */
+            --hover-light: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color); /* Latar belakang abu-abu kelabu */
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        /* --- Animasi Pembukaan Smooth --- */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-op);
+            font-size: 3.5em;
+            font-weight: 700;
+            opacity: 1;
+            transition: opacity 1.2s ease-out, visibility 1.2s ease-out;
+            z-index: 1000;
+        }
+
+        .hidden-intro {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        #intro-overlay::before {
+            content: "AstroCalc 2.0";
+            animation: pulse-modern 1.2s 3 alternate; /* Tiga kali kedipan */
+        }
+
+        @keyframes pulse-modern {
+            from { opacity: 0.5; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .calculator {
+            /* TANPA CARD - Hanya bentuk sederhana */
+            background-color: var(--calc-bg);
+            border-radius: 15px;
+            padding: 15px;
+            max-width: 380px;
+            width: 90%;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease-in 1.2s, transform 1s ease-in 1.2s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Shadow tipis */
+        }
+
+        .show-calc {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Display Modern --- */
+        .display {
+            padding: 10px 0;
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        
+        #expression {
+            font-size: 1.2em;
+            color: #b0b8bf; /* Sedikit lebih redup */
+            min-height: 1em;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        #output {
+            font-size: 3em;
+            color: var(--text-color);
+            min-height: 1.2em;
+            overflow: hidden;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        
+        /* --- Tombol Modern --- */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        button {
+            border: none;
+            padding: 20px 10px;
+            border-radius: 10px;
+            font-size: 1.4em;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-color);
+            background-color: #4a5059; /* Warna tombol abu-abu */
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+        
+        /* Animasi Tombol (Saat di-klik) */
+        button:hover {
+            background-color: #555b66;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+            background-color: #606670;
+        }
+
+        /* Styling spesifik untuk operator dan tombol fungsi */
+        .operator {
+            background: var(--primary-op);
+            color: var(--calc-bg);
+            font-weight: bold;
+        }
+        
+        .operator:hover {
+            background: #00c7d1;
+        }
+        
+        .operator:active {
+            background: #00a0a8;
+        }
+
+        .clear-delete {
+            background: var(--secondary-op);
+            color: var(--calc-bg);
+        }
+
+        .clear-delete:hover {
+            background: #ff916f;
+        }
+
+        .equal {
+            grid-column: span 2;
+            background: var(--primary-op);
+            color: var(--calc-bg);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-overlay"></div>
+
+    <div class="calculator" id="astro-calc">
+        <div class="display">
+            <div id="expression"></div>
+            <div id="output">0</div>
+        </div>
+        <div class="buttons">
+            <button class="clear-delete" onclick="clearAll()">AC</button>
+            <button class="clear-delete" onclick="deleteLast()">DEL</button>
+            <button class="operator" onclick="appendInput('%')">%</button>
+            <button class="operator" onclick="appendInput('/')">÷</button>
+            
+            <button onclick="appendInput('7')">7</button>
+            <button onclick="appendInput('8')">8</button>
+            <button onclick="appendInput('9')">9</button>
+            <button class="operator" onclick="appendInput('*')">×</button>
+
+            <button onclick="appendInput('4')">4</button>
+            <button onclick="appendInput('5')">5</button>
+            <button onclick="appendInput('6')">6</button>
+            <button class="operator" onclick="appendInput('-')">-</button>
+
+            <button onclick="appendInput('1')">1</button>
+            <button onclick="appendInput('2')">2</button>
+            <button onclick="appendInput('3')">3</button>
+            <button class="operator" onclick="appendInput('+')">+</button>
+
+            <button onclick="appendInput('0')">0</button>
+            <button onclick="appendInput('.')">.</button>
+            <button class="equal" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript untuk Fungsi dan Animasi
+        let currentExpression = '';
+        let isResultShown = false; // Flag untuk memeriksa apakah tampilan menunjukkan hasil
+        
+        const expressionElement = document.getElementById('expression');
+        const outputElement = document.getElementById('output');
+        const introOverlay = document.getElementById('intro-overlay');
+        const calculatorElement = document.getElementById('astro-calc');
+
+        // --- Fungsi Animasi Pembukaan ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                introOverlay.classList.add('hidden-intro');
+                calculatorElement.classList.add('show-calc');
+            }, 1200); // Overlay hilang setelah 1.2 detik
+        });
+
+        // --- Fungsi Utama Kalkulator ---
+
+        function updateDisplay() {
+            expressionElement.innerText = currentExpression;
+            // outputElement akan diupdate hanya saat hasil dihitung
+        }
+
+        function appendInput(value) {
+            // Jika hasil sudah ditampilkan, dan pengguna menekan angka/titik, mulai ekspresi baru
+            if (isResultShown && (/[0-9.]/).test(value)) {
+                currentExpression = value;
+                outputElement.innerText = currentExpression;
+                isResultShown = false;
+                updateDisplay();
+                return;
+            }
+            
+            // Jika hasil sudah ditampilkan, dan pengguna menekan operator, gunakan hasil sebagai awal ekspresi baru
+            if (isResultShown && (/[+\-*/%]/).test(value)) {
+                currentExpression = outputElement.innerText + value;
+                isResultShown = false;
+                updateDisplay();
+                return;
+            }
+
+            // Mencegah dua operator berurutan (kecuali operator sebelumnya adalah minus untuk tanda negatif)
+            const lastChar = currentExpression.slice(-1);
+            const isOperator = (/[+\-*/%]/).test(value);
+            const lastIsOperator = (/[+\-*/%]/).test(lastChar);
+
+            if (isOperator && lastIsOperator) {
+                // Ganti operator terakhir
+                if (value !== '-' || lastChar === '*') { // Izinkan 5 * - 3
+                    currentExpression = currentExpression.slice(0, -1);
+                }
+            } else if (value === '.' && lastChar === '.') {
+                return; // Mencegah titik ganda
+            }
+
+            currentExpression += value;
+            outputElement.innerText = currentExpression; // Tampilkan input mentah di output
+            isResultShown = false;
+            updateDisplay();
+        }
+
+        function clearAll() {
+            currentExpression = '';
+            outputElement.innerText = '0';
+            isResultShown = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (isResultShown) {
+                clearAll(); // Jika hasil ditampilkan, hapus semua
+                return;
+            }
+            currentExpression = currentExpression.slice(0, -1);
+            if (currentExpression === '') {
+                outputElement.innerText = '0';
+            } else {
+                outputElement.innerText = currentExpression;
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (currentExpression === '') return;
+
+            // Bersihkan tampilan ekspresi (untuk tujuan modern, hanya ekspresi terakhir yang ditampilkan)
+            // Namun karena input langsung, kita akan menunjukkannya sebagai ekspresi
+            expressionElement.innerText = currentExpression + ' =';
+
+            try {
+                // Ganti simbol untuk dievaluasi oleh JavaScript
+                let cleanExpression = currentExpression.replace(/÷/g, '/').replace(/×/g, '*').replace(/%/g, '/100*');
+                
+                // Evaluasi ekspresi menggunakan fungsi eval() - Catatan: eval() harus digunakan dengan hati-hati.
+                let result = eval(cleanExpression);
+
+                if (isNaN(result) || !isFinite(result)) {
+                    outputElement.innerText = 'Error';
+                } else {
+                    // Batasi desimal untuk tampilan
+                    result = parseFloat(result.toFixed(10));
+                    outputElement.innerText = result.toString();
+                }
+
+            } catch (error) {
+                outputElement.innerText = 'Error';
+            }
+
+            currentExpression = outputElement.innerText; // Set hasil sebagai input berikutnya
+            isResultShown = true;
+        }
+
+        // Inisialisasi tampilan
+        updateDisplay();
+    </script>
+</body>
+</html>
